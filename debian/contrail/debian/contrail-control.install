@@ -6,5 +6,3 @@ etc/contrail/supervisord_control.conf
 etc/contrail/supervisord_control_files/contrail-control.rules
 etc/contrail/supervisord_control_files/contrail-control.ini
 debian/nodemgr_files/contrail-control-nodemgr.ini etc/contrail/supervisord_control_files
-usr/lib/python*/dist-packages/control_node*
-usr/lib/python*/dist-packages/Control_Node-*.egg-info
