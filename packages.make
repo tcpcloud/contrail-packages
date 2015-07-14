@@ -35,6 +35,7 @@ source-all: source-package-contrail-web-core \
 	source-package-contrail-web-controller \
 	source-package-contrail \
 	source-package-ifmap-server \
+	source-package-ifmap-python-client \
 	source-package-neutron-plugin-contrail \
 	source-package-ceilometer-plugin-contrail \
 	source-package-contrail-heat
@@ -119,6 +120,14 @@ source-ifmap-server:
 
 source-package-ifmap-server: clean-ifmap-server debian-ifmap-server source-ifmap-server
 	$(eval PACKAGE := ifmap-server)
+	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -S -rfakeroot $(KEYOPT))
+
+source-ifmap-python-client:
+	$(eval PACKAGE := ifmap-python-client)
+	(cd build/packages/$(PACKAGE); fakeroot debian/rules get-orig-source)
+
+source-package-ifmap-python-client: clean-ifmap-python-client debian-ifmap-python-client source-ifmap-python-client
+	$(eval PACKAGE := ifmap-python-client)
 	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -S -rfakeroot $(KEYOPT))
 
 package-neutron-plugin-contrail: debian-neutron-plugin-contrail
