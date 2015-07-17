@@ -1,7 +1,6 @@
 #!/usr/bin/make -f
 
-SB_TOP := $(shell pwd | sed -re "s/(.*)\/build\/packages(.*)/\1/")
-INSTALL_ROOT := $(shell pwd)
+BUILD_ROOT=$(shell pwd)
 
 %:
 	dh $@
@@ -10,7 +9,3 @@ override_dh_installinit:
 	dh_installinit
 	dh_installinit --name=contrail-webui-jobserver
 	dh_installinit --name=contrail-webui-webserver
-
-override_dh_auto_build:
-	(cd ${SB_TOP}/contrail-web-core && make package REPO=${SB_TOP}/contrail-web-controller,webController)
-	cp -r -a ${SB_TOP}/contrail-web-controller/webroot ${INSTALL_ROOT}/
