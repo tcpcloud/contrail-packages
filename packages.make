@@ -35,13 +35,11 @@ source-all: source-package-contrail-web-core \
 	source-package-contrail-web-controller \
 	source-package-contrail \
 	source-package-ifmap-server \
-	source-package-ifmap-python-client \
 	source-package-neutron-plugin-contrail \
 	source-package-ceilometer-plugin-contrail \
 	source-package-contrail-heat
 
 all: package-ifmap-server \
-	package-ifmap-python-client \
 	package-contrail-web-core \
 	package-contrail-web-controller \
 	package-contrail \
@@ -56,15 +54,12 @@ package-ifmap-server: clean-ifmap-server debian-ifmap-server
 	(cd build/packages/$(PACKAGE); fakeroot debian/rules get-orig-source)
 	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -uc -us -b -rfakeroot)
 
-package-ifmap-python-client: clean-ifmap-python-client debian-ifmap-python-client
-	$(eval PACKAGE := $(patsubst package-%,%,$@))
-	@echo "Building package $(PACKAGE)"
-	(cd build/packages/$(PACKAGE); fakeroot debian/rules get-orig-source)
-	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -uc -us -b -rfakeroot)
-
 fetch-webui-third-party:
 	@echo "Fetching webui third party"
 	(cd contrail-webui-third-party; python fetch_packages.py -f packages.xml)
+	rm -rf contrail-web-core/node_modules
+	mkdir contrail-web-core/node_modules
+	cp -rf contrail-webui-third-party/node_modules/* contrail-web-core/node_modules/
 
 package-contrail-web-core: clean-contrail-web-core debian-contrail-web-core fetch-webui-third-party
 	$(eval PACKAGE := $(patsubst package-%,%,$@))
@@ -128,14 +123,6 @@ source-ifmap-server:
 
 source-package-ifmap-server: clean-ifmap-server debian-ifmap-server source-ifmap-server
 	$(eval PACKAGE := ifmap-server)
-	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -S -rfakeroot $(KEYOPT))
-
-source-ifmap-python-client:
-	$(eval PACKAGE := ifmap-python-client)
-	(cd build/packages/$(PACKAGE); fakeroot debian/rules get-orig-source)
-
-source-package-ifmap-python-client: clean-ifmap-python-client debian-ifmap-python-client source-ifmap-python-client
-	$(eval PACKAGE := ifmap-python-client)
 	(cd build/packages/$(PACKAGE); dpkg-buildpackage -j$(JOBS) -S -rfakeroot $(KEYOPT))
 
 package-neutron-plugin-contrail: debian-neutron-plugin-contrail
