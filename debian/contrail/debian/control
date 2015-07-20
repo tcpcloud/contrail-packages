@@ -321,7 +321,7 @@ Description: OpenStack Nova compute-node driver for OpenContrail
  This package contains the OpenStack Nova compute-node driver for OpenContrail.
 
 Package: contrail-nodemgr
-Architecture: any
+Architecture: amd64
 Depends: dpkg-dev,
          python-contrail (>= ${source:Version}),
          python-lxml,
@@ -332,7 +332,7 @@ Depends: dpkg-dev,
 Description: OpenContrail nodemgr implementation
 
 Package: contrail-database
-Architecture: any
+Architecture: amd64
 Depends: dpkg-dev,
          zookeeperd,
          contrail-nodemgr (>= ${source:Version}),
