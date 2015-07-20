@@ -1,0 +1,33 @@
+--- a/controller/src/config/utils/contrail-status.py
++++ b/controller/src/config/utils/contrail-status.py
+@@ -345,12 +345,6 @@
+     elif nodetype == 'database':
+         print "== Contrail Database =="
+         check_status('supervisor-database', options)
+-    elif nodetype == 'webui':
+-        print "== Contrail Web UI =="
+-        check_status('supervisor-webui', options)
+-    elif nodetype == 'support-service':
+-        print "== Contrail Support Services =="
+-        check_status('supervisor-support-service', options)
+ 
+ def package_installed(pkg):
+     if distribution == 'debian':
+@@ -371,7 +365,7 @@
+     parser.add_option('-t', '--timeout', dest='timeout', type="float",
+                       default=2,
+                       help="timeout in seconds to use for HTTP requests to services")
+-    
++
+     (options, args) = parser.parse_args()
+     if args:
+         parser.error("No arguments are permitted")
+@@ -405,7 +399,7 @@
+ 
+     if capi:
+         supervisor_status('config', options)
+-    
++
+     if cwebui:
+         supervisor_status('webui', options)
+ 
