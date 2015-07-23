@@ -64,6 +64,7 @@ override_dh_installinit:
 	dh_installinit --name=supervisor-control
 	dh_installinit --name=supervisor-config
 	dh_installinit --name=supervisor-vrouter --no-restart-on-upgrade
+	dh_installinit --name=supervisor-database
 
 override_dh_strip:
 	dh_strip -pcontrail-analytics --dbg-package=contrail-analytics-dbg
