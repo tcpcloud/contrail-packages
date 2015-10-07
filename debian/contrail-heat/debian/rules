@@ -14,3 +14,5 @@ TARBALL := $(PACKAGE)_$(SRC_VERSION).orig.tar.gz
 
 override_dh_auto_build:
 	(cd ${SB_TOP}/openstack/contrail-heat; python setup.py install --root=${INSTALL_ROOT})
+	# Heat expects python package, should be fixed in contrail-heat
+	touch ${INSTALL_ROOT}/usr/lib/heat/resources/__init__.py
