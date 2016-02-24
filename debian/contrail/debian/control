@@ -199,7 +199,7 @@ Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
 Recommends: contrail-nodemgr (>= ${source:Version}),
-Architecture: amd64
+Architecture: any
 Conflicts: apport
 Description: OpenContrail vrouter agent
  OpenContrail is a network virtualization solution that provides an overlay
@@ -250,7 +250,7 @@ Description: OpenContrail tools and utilities
  scripts to configure and diagnose OpenContrail.
 
 Package: python-contrail-vrouter-api
-Architecture: amd64
+Architecture: any
 Section: python
 Depends: contrail-vrouter-agent, ${misc:Depends}, ${python:Depends}
 Description: OpenContrail vrouter agent api
@@ -259,14 +259,14 @@ Description: OpenContrail vrouter agent api
  in the OpenContrail API server.
 
 Package: python-opencontrail-vrouter-netns
-Architecture: amd64
+Architecture: any
 Section: python
 Depends: ${misc:Depends}, ${python:Depends}
 Description: OpenContrail vrouter network namespace package
  Script to start or destroy a Linux network namespace.
 
 Package: contrail-vrouter-utils
-Architecture: amd64
+Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: OpenContrail VRouter - Utilities
  The OpenContrail vRouter is a forwarding plane (of a distributed router) that
@@ -276,7 +276,7 @@ Description: OpenContrail VRouter - Utilities
  configure and diagnose the OpenContrail Linux kernel module.
 
 Package: contrail-vrouter-source
-Architecture: amd64
+Architecture: any
 Depends: bzip2, debhelper, module-assistant, ${misc:Depends}
 Description: OpenContrail VRouter - Source
  The OpenContrail vRouter is a forwarding plane (of a distributed router) that
@@ -291,7 +291,7 @@ Description: OpenContrail VRouter - Source
  module in source code format.
 
 Package: contrail-vrouter-dkms
-Architecture: amd64
+Architecture: any
 Depends: contrail-vrouter-utils (= ${binary:Version}),
          dkms,
          coreutils,
