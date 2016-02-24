@@ -1,0 +1,20 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -5,6 +5,7 @@
+ #
+ 
+ # repository root directory
++import platform
+ import os
+ import sys
+ sys.path.append('tools/build')
+@@ -13,6 +14,9 @@
+ conf = Configure(DefaultEnvironment(ENV = os.environ))
+ env = rules.SetupBuildEnvironment(conf)
+ 
++if platform.machine().startswith('arm'):
++    env.Append(CCFLAGS = ['-DTBB_USE_GCC_BUILTINS=1', '-D__TBB_64BIT_ATOMICS=0'])
++
+ SConscript(dirs=['controller', 'vrouter', 'tools/sandesh'])
+ 
+ SConscript('openstack/nova_contrail_vif/SConscript',
