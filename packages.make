@@ -20,8 +20,9 @@ KEYOPT=-k$(KEYID)
 #
 # Directories listed in manifest (excluding package scripts)
 #
-SOURCE_CONTRAIL_DIRS:=$(shell xmllint --xpath '//manifest/project/@path' .repo/manifest.xml | sed -r 's/path=\"([^\"]+)\"/\1/g' | sed 's/tools\/packages//')
+SOURCE_CONTRAIL_DIRS:=$(shell xmllint --xpath '//manifest/project/@path' .repo/manifest.xml | sed -r 's/path=\"([^\"]+)\"/\1/g' | sed -e 's/tools\/packages//' -e 's/vrouter//')
 SOURCE_CONTRAIL_ARCHIVE:=SConstruct $(SOURCE_CONTRAIL_DIRS)
+SOURCE_CONTRAIL_VROUTER_ARCHIVE:=SConstruct controller vrouter tools/build tools/generateds tools/sandesh third_party controller/src/io controller/lib/thrift
 SERIES=$(shell lsb_release -c -s)
 
 # DPDK vRouter is currently supported only on Ubuntu 12.04 Precise
@@ -30,10 +31,12 @@ ifeq ($(SERIES),precise)
 endif
 
 source-all: source-package-contrail \
+	    source-package-contrail-vrouter \
         source-package-contrail-web-core \
         source-package-contrail-web-controller
 
 all: package-contrail \
+	 package-contrail-vrouter \
      package-ifmap-server \
      package-ifmap-python-client \
      $(CONTRAIL_VROUTER_DPDK)
@@ -116,6 +119,28 @@ source-package-contrail: clean-contrail debian-contrail
 	sed -i '/BUILDDEP_SERIES/d' build/packages/$(PACKAGE)/debian/control
 	(cd vrouter; git clean -f -d)
 	tar zcf build/packages/contrail_$(CONTRAIL_VERSION).orig.tar.gz $(SOURCE_CONTRAIL_ARCHIVE)
+	@echo "Building source package $(PACKAGE)"
+	(cd build/packages/$(PACKAGE); dpkg-buildpackage -S -rfakeroot $(KEYOPT))
+
+package-contrail-vrouter: debian-contrail
+	$(eval PACKAGE := contrail-vrouter)
+	@echo "Building package $(PACKAGE)"
+	sed -i 's/VERSION/$(CONTRAIL_VERSION)/g' build/packages/$(PACKAGE)/debian/changelog
+	sed -i 's/SERIES/$(SERIES)/g' build/packages/$(PACKAGE)/debian/changelog
+	(cd build/packages/$(PACKAGE)/debian; sed -i '/BUILDDEP_SERIES/r builddep.$(SERIES)' control)
+	sed -i '/BUILDDEP_SERIES/d' build/packages/$(PACKAGE)/debian/control
+	(cd build/packages/$(PACKAGE); dpkg-buildpackage -uc -us -b -rfakeroot)
+	chmod u+x build/packages/contrail/debian/rules.modules
+	(cd build/packages/$(PACKAGE); fakeroot debian/rules.modules KVERS=$(KVERS) binary-modules)
+
+source-package-contrail-vrouter: clean-contrail-vrouter debian-contrail-vrouter
+	$(eval PACKAGE := contrail-vrouter)
+	sed -i 's/VERSION/$(CONTRAIL_VROUTER_VERSION)/g' build/packages/$(PACKAGE)/debian/changelog
+	sed -i 's/SERIES/$(SERIES)/g' build/packages/$(PACKAGE)/debian/changelog
+	(cd build/packages/$(PACKAGE)/debian; sed -i '/BUILDDEP_SERIES/r builddep.$(SERIES)' control)
+	sed -i '/BUILDDEP_SERIES/d' build/packages/$(PACKAGE)/debian/control
+	(cd vrouter; git clean -f -d)
+	tar zcf build/packages/contrail-vrouter_$(CONTRAIL_VROUTER_VERSION).orig.tar.gz $(SOURCE_CONTRAIL_VROUTER_ARCHIVE)
 	@echo "Building source package $(PACKAGE)"
 	(cd build/packages/$(PACKAGE); dpkg-buildpackage -S -rfakeroot $(KEYOPT))
 

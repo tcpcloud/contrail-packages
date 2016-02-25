@@ -1,0 +1,108 @@
+Source: contrail-vrouter
+Section: net
+Priority: optional
+Maintainer: OpenContrail developers <dev@lists.opencontrail.org>
+Standards-Version: 3.9.5
+Homepage: http://opencontrail.org/
+Vcs-Git: git://github.com/Juniper/contrail-vrouter.git
+Vcs-Browser: https://github.com/Juniper/contrail-vrouter/
+XS-Python-Version: >= 2.7
+Build-Depends: autoconf,
+               automake,
+               bison,
+               debhelper (>= 8.0.0),
+               flex,
+               libcurl4-openssl-dev,
+               libexpat-dev,
+               libgettextpo0,
+               libprotobuf-dev,
+               libtool,
+               libxml2-dev,
+               make,
+               protobuf-compiler,
+               python-all (>= 2.7),
+               python-dev,
+               python-lxml,
+               python-setuptools,
+               python-sphinx,
+               ruby-ronn,
+               scons (>= 2.1.0),
+
+Package: contrail-vrouter-agent
+Pre-Depends: ${misc:Pre-Depends}, debconf
+Depends: adduser,
+         contrail-lib (>= ${binary:Version}),
+         contrail-vrouter,
+         supervisor,
+         ${misc:Depends},
+         ${shlibs:Depends}
+Recommends: contrail-nodemgr (>= ${source:Version}),
+Architecture: amd64
+Conflicts: apport
+Description: OpenContrail vrouter agent
+ OpenContrail is a network virtualization solution that provides an overlay
+ virtual-network to virtual-machines, containers or network namespaces.
+ .
+ This package provides the contrail-vrouter user space agent.
+
+Package: python-contrail-vrouter-api
+Architecture: amd64
+Section: python
+Depends: contrail-vrouter-agent, ${misc:Depends}, ${python:Depends}
+Description: OpenContrail vrouter agent api
+ The VRouter Agent API is used to inform the VRouter agent of the association
+ between local interfaces (e.g. tap/tun or veth) and the interface uuid defined
+ in the OpenContrail API server.
+
+Package: python-opencontrail-vrouter-netns
+Architecture: amd64
+Section: python
+Depends: ${misc:Depends}, ${python:Depends}
+Description: OpenContrail vrouter network namespace package
+ Script to start or destroy a Linux network namespace.
+
+Package: contrail-vrouter-utils
+Architecture: amd64
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: OpenContrail VRouter - Utilities
+ The OpenContrail vRouter is a forwarding plane (of a distributed router) that
+ runs in the hypervisor of a virtualized server.
+ .
+ The package opencontrail-vrouter-utils provides command line utilities to
+ configure and diagnose the OpenContrail Linux kernel module.
+
+Package: contrail-vrouter-source
+Architecture: amd64
+Depends: bzip2, debhelper, module-assistant, ${misc:Depends}
+Description: OpenContrail VRouter - Source
+ The OpenContrail vRouter is a forwarding plane (of a distributed router) that
+ runs in the hypervisor of a virtualized server. It extends the network from the
+ physical routers and switches in a data center into a virtual overlay network
+ hosted in the virtualized servers. The OpenContrail vRouter is
+ conceptually similar to existing commercial and open source vSwitches such as
+ for example the Open vSwitch (OVS) but it also provides routing and higher
+ layer services (hence vRouter instead of vSwitch).
+ .
+ The package opencontrail-vrouter-source provides the OpenContrail Linux kernel
+ module in source code format.
+
+Package: contrail-vrouter-dkms
+Architecture: amd64
+Depends: contrail-vrouter-utils (= ${binary:Version}),
+         dkms,
+         coreutils,
+         hostname,
+         python-opencontrail-vrouter-netns (= ${binary:Version}),
+         ${misc:Depends}
+Provides: contrail-vrouter
+Description: OpenContrail VRouter - DKMS version
+ The OpenContrail vRouter is a forwarding plane (of a distributed router) that
+ runs in the hypervisor of a virtualized server. It extends the network from the
+ physical routers and switches in a data center into a virtual overlay network
+ hosted in the virtualized servers. The OpenContrail vRouter is
+ conceptually similar to existing commercial and open source vSwitches such as
+ for example the Open vSwitch (OVS) but it also provides routing and higher
+ layer services (hence vRouter instead of vSwitch).
+ .
+ The package opencontrail-vrouter-dkms provides the OpenContrail Linux kernel
+ module.
