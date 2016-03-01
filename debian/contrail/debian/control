@@ -38,7 +38,7 @@ Build-Depends: autoconf,
                BUILDDEP_SERIES
 
 Package: contrail-analytics
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: adduser,
          contrail-lib (>= ${binary:Version}),
          librdkafka1 (>= 0.8.5),
@@ -75,7 +75,7 @@ Description: OpenContrail analytics
  logs, events, and errors.
 
 Package: contrail-config
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: adduser,
          python-bitarray (>= 0.8.0),
          python-bottle (>= 0.11.6),
@@ -117,7 +117,7 @@ Description: OpenContrail configuration management
  interacting with network elements. Both these are kept in a NoSQL database.
 
 Package: contrail-config-openstack
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: contrail-config (= ${source:Version}),
          python-keystoneclient (>= 0.2.2),
          python-neutron,
@@ -155,7 +155,7 @@ Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
 Recommends: contrail-nodemgr (>= ${source:Version}),
-Architecture: amd64
+Architecture: amd64 armhf
 Description: OpenContrail control-node
  Control nodes implement the logically centralized portion of the control
  plane. Not all control plane functions are logically centralized – some control
@@ -185,7 +185,7 @@ Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
 Replaces: contrail-openstack-control
-Architecture: amd64
+Architecture: amd64 armhf
 Description: OpenContrail control-dns
  DNS provides contrail-dns, contrail-named, contrail-rndc
  and contrail-rndc-confgen daemons
@@ -210,7 +210,7 @@ Description: OpenContrail vrouter agent
  This package provides the contrail-vrouter user space agent.
 
 Package: python-contrail
-Architecture: amd64
+Architecture: amd64 armhf
 Section: python
 Depends: python-bottle,
          python-gevent (>= 1.0),
@@ -226,7 +226,7 @@ Description: OpenContrail python-libs
  The package python-opencontrail provides the OpenContrail API library.
 
 Package: contrail-lib
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: OpenContrail libraries
  OpenContrail is a network virtualization solution that provides an overlay
@@ -236,7 +236,7 @@ Description: OpenContrail libraries
  OpenContrail control and compute nodes.
 
 Package: contrail-utils
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: dpkg-dev,
          python-contrail (>= ${source:Version}),
          python-lxml,
@@ -314,7 +314,7 @@ Description: OpenContrail VRouter - DKMS version
  module.
 
 Package: contrail-nova-driver
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: python-thrift, ${misc:Depends}, ${python:Depends}
 Description: OpenStack Nova compute-node driver for OpenContrail
  OpenContrail is a network virtualization solution that provides an overlay
@@ -323,7 +323,7 @@ Description: OpenStack Nova compute-node driver for OpenContrail
  This package contains the OpenStack Nova compute-node driver for OpenContrail.
 
 Package: contrail-nodemgr
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: dpkg-dev,
          python-contrail (>= ${source:Version}),
          python-lxml,
@@ -334,7 +334,7 @@ Depends: dpkg-dev,
 Description: OpenContrail nodemgr implementation
 
 Package: contrail-database
-Architecture: amd64
+Architecture: amd64 armhf
 Depends: dpkg-dev,
          zookeeperd,
          supervisor,
