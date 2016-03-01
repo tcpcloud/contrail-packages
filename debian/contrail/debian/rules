@@ -17,7 +17,15 @@ TARGETS=control-node:node_mgr \
         src:nodemgr
 
 KERNELDIR?=/lib/modules/$(shell ls /lib/modules/ | head -1)/build
-SCONS_OPTS=--opt=production --optimization=production --root=${INSTALL_ROOT} --kernel-dir=${KERNELDIR}
+SCONS_OPTS=--root=${INSTALL_ROOT} --kernel-dir=${KERNELDIR}
+
+ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+	OPTIMIZATION = debug
+else
+	OPTIMIZATION = production
+endif
+
+SCONS_OPTS += --opt=$(OPTIMIZATION) --optimization=$(OPTIMIZATION)
 
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
     NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
@@ -36,11 +44,11 @@ override_dh_auto_build:
 	sed "s/__VERSION__/$(DEB_UPSTREAM_VERSION)/g" debian/dkms.conf.in > usr/src/vrouter/dkms.conf
 	# Node manager
 	(cd ${SB_TOP}; scons ${SCONS_OPTS} ${TARGETS})
-	(cd ${SB_TOP}/build/production/nodemgr; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
-	(cd ${SB_TOP}/build/production/control-node; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
-	(cd ${SB_TOP}/build/production/vnsw/agent/uve; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
-	(cd ${SB_TOP}/build/production/opserver/node_mgr; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
-	(cd ${SB_TOP}/build/production/analytics/database; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
+	(cd ${SB_TOP}/build/$(OPTIMIZATION)/nodemgr; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
+	(cd ${SB_TOP}/build/$(OPTIMIZATION)/control-node; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
+	(cd ${SB_TOP}/build/$(OPTIMIZATION)/vnsw/agent/uve; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
+	(cd ${SB_TOP}/build/$(OPTIMIZATION)/opserver/node_mgr; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
+	(cd ${SB_TOP}/build/$(OPTIMIZATION)/analytics/database; python setup.py install --root=${INSTALL_ROOT} --install-layout=deb)
 
 override_dh_auto_clean:
 	dh_auto_clean
