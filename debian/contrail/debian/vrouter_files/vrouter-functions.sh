@@ -18,6 +18,7 @@ function pkt_setup () {
         fi
         echo $str > $f/rps_cpus
     done
+    ifconfig $1 up
 }
 
 function insert_vrouter() {
@@ -97,12 +98,14 @@ _dpdk_conf_read() {
     _DPDK_CONF_READ=1
 
     ## global vRouter/DPDK configuration
-    DPDK_BIND="/usr/lib/contrail/dpdk_nic_bind.py"
+    DPDK_BINDING_DRIVER_DATA='/var/run/vrouter'
+    DPDK_BIND="/opt/contrail/bin/dpdk_nic_bind.py"
     DPDK_RTE_CONFIG="/run/.rte_config"
     VROUTER_SERVICE="supervisor-vrouter"
     AGENT_CONF="${CONFIG}"
     VROUTER_DPDK_INI=/etc/contrail/supervisord_vrouter_files/contrail-vrouter-dpdk.ini
     DPDK_NETLINK_TCP_PORT=20914
+    DPDK_MEM_PER_SOCKET="1024"
 
     if [ ! -s ${AGENT_CONF} ]; then
         echo "$(date): Error reading ${AGENT_CONF}: file does not exist"
@@ -125,6 +128,23 @@ _dpdk_conf_read() {
         echo "$(date): Error reading ${AGENT_CONF}: no vhost device defined"
         exit 1
     fi
+
+    # TODO: Remove this waiting loop as the _dpdk_conf_read() is used also when
+    # the vRouter is already started. In that case, there is no entry under
+    # /sys/class/net/${DPDK_PHY} and this code unnecessarily adds 20s of a
+    # delay, enlarging the start/stop time of the supervisor-vrouter service.
+    loops=0
+    # Waiting for interface, we should wait
+    # for interface in case of rebinding interface from dpdk (igb_uio) driver to kernel driver
+    while [ ! -e /sys/class/net/${DPDK_PHY} ]
+    do
+        sleep 2
+        loops=$(($loops + 1))
+        if [ $loops -ge 10 ]; then
+            echo "$(date): ${DPDK_PHY} interface: Does not exist."
+            return 1
+        fi
+    done
 
     ## check for VLANs
     _vlan_file="/proc/net/vlan/${DPDK_PHY}"
@@ -163,7 +183,9 @@ vrouter_dpdk_start() {
     # remove rte configuration file if vRouter has crashed
     rm -f ${DPDK_RTE_CONFIG}
 
-    service ${VROUTER_SERVICE} start
+    # set maximum socket buffer size to (max hold flows entries * 9160 bytes)
+    sysctl -w net.core.wmem_max=9160000
+
     loops=0
     # wait for vRouter/DPDK to start
     while ! _is_vrouter_dpdk_running
@@ -175,6 +197,17 @@ vrouter_dpdk_start() {
             return 1
         fi
     done
+
+    # Include huge pages in core dump of contrail-vrouter-dpdk process
+    pid=$(pidof contrail-vrouter-dpdk)
+    if [ -f /proc/$pid/coredump_filter ]; then
+            cdump_filter=`cat /proc/$pid/coredump_filter`
+            cdump_filter=$((0x40 | 0x$cdump_filter))
+            echo $cdump_filter > /proc/$pid/coredump_filter
+    else
+            cdump_filter=0x73
+            echo $cdump_filter > /proc/$pid/coredump_filter
+    fi
 
     echo "$(date): Waiting for Agent to configure ${DPDK_VHOST}..."
     loops=0
@@ -192,11 +225,11 @@ vrouter_dpdk_start() {
     if [ ! -L /sys/class/net/${DPDK_VHOST} ]; then
         echo "$(date): Creating ${DPDK_VHOST} interface with vif utility..."
 
-        if [ -z "${DPDK_PHY_MAC}"]; then
+        if [ -z "${DPDK_PHY_MAC}" ]; then
             echo "Error reading ${AGENT_CONF}: physical MAC address is not defined"
             return 1
         fi
-        if [ -z "${DPDK_PHY_PCI}"]; then
+        if [ -z "${DPDK_PHY_PCI}" ]; then
             echo "Error reading ${AGENT_CONF}: physical PCI address is not defined"
             return 1
         fi
@@ -279,7 +312,12 @@ _dpdk_system_bond_info_collect() {
             DPDK_BOND_PCIS="${DPDK_BOND_PCIS} ${slave_pci}"
         fi
         if [ -z "${DPDK_BOND_NUMA}" ]; then
-            DPDK_BOND_NUMA="${slave_numa}"
+            # DPDK EAL for bond interface interprets -1 as 255
+            if [ "${slave_numa}" -eq -1 ]; then
+                DPDK_BOND_NUMA=0
+            else
+                DPDK_BOND_NUMA="${slave_numa}"
+            fi
         fi
         if [ -z "${DPDK_BOND_MAC}" ]; then
             DPDK_BOND_MAC="${slave_mac}"
@@ -294,39 +332,67 @@ _dpdk_system_bond_info_collect() {
 _dpdk_vrouter_ini_update() {
     _dpdk_system_bond_info_collect
 
+    ## update virtual device (bond) configuration
     dpdk_vdev=""
     if [ -n "${DPDK_BOND_MODE}" -a -n "${DPDK_BOND_NUMA}" ]; then
         echo "${0##*/}: updating bonding configuration in ${VROUTER_DPDK_INI}..."
 
-        dpdk_vdev="--vdev \"eth_bond_${DPDK_PHY},mode=${DPDK_BOND_MODE}"
+        dpdk_vdev=" --vdev \"eth_bond_${DPDK_PHY},mode=${DPDK_BOND_MODE}"
         dpdk_vdev="${dpdk_vdev},xmit_policy=${DPDK_BOND_POLICY}"
         dpdk_vdev="${dpdk_vdev},socket_id=${DPDK_BOND_NUMA}"
         for SLAVE in ${DPDK_BOND_PCIS}; do
             dpdk_vdev="${dpdk_vdev},slave=${SLAVE}"
         done
         dpdk_vdev="${dpdk_vdev}\""
-
-        ## update the ini file
-        sed -ri.bond.bak \
-            -e 's/(^ *command *=.*vrouter-dpdk.*) (--vdev +\"[^"]+\"|--vdev +[^ ]+)(.*) *$/\1\3/' \
-            -e 's/(^ *command *=.*vrouter-dpdk.*) (--vdev +\"[^"]+\"|--vdev +[^ ]+)(.*) *$/\1\3/' \
-            -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1 ${dpdk_vdev}/" \
-             ${VROUTER_DPDK_INI}
     fi
+    ## always update the ini file, so we remove vdev argument
+    ## whenever Linux configuration has changed
+    sed -ri.bak \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vdev +\"[^"]+\"|--vdev +[^ ]+)(.*) *$/\1\3/' \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vdev +\"[^"]+\"|--vdev +[^ ]+)(.*) *$/\1\3/' \
+        -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1${dpdk_vdev}/" \
+         ${VROUTER_DPDK_INI}
 
+
+    ## update VLAN configuration
     dpdk_vlan=""
+    dpdk_vlan_name=""
     if [ -n "${DPDK_VLAN_ID}" ]; then
         echo "${0##*/}: updating VLAN configuration in ${VROUTER_DPDK_INI}..."
-
-        dpdk_vlan="--vlan \"${DPDK_VLAN_ID}\""
-
-        ## update the ini file
-        sed -ri.vlan.bak \
-            -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan +\"[^"]+\"|--vlan +[^ ]+)(.*) *$/\1\3/' \
-            -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan +\"[^"]+\"|--vlan +[^ ]+)(.*) *$/\1\3/' \
-            -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1 ${dpdk_vlan}/" \
-             ${VROUTER_DPDK_INI}
+        dpdk_vlan=" --vlan_tci \"${DPDK_VLAN_ID}\""
+        dpdk_vlan_name=" --vlan_fwd_intf_name \"${DPDK_PHY}\""
     fi
+    sed -ri.bak \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan_tci +\"[^"]+\"|--vlan_tci +[^ ]+)(.*) *$/\1\3/' \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan_tci +\"[^"]+\"|--vlan_tci +[^ ]+)(.*) *$/\1\3/' \
+        -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1${dpdk_vlan}/" \
+         ${VROUTER_DPDK_INI}
+    sed -ri.bak \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan_fwd_intf_name +\"[^"]+\"|--vlan_fwd_intf_name +[^ ]+)(.*) *$/\1\3/' \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--vlan_fwd_intf_name +\"[^"]+\"|--vlan_fwd_intf_name +[^ ]+)(.*) *$/\1\3/' \
+        -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1${dpdk_vlan_name}/" \
+         ${VROUTER_DPDK_INI}
+
+    ## allocate memory on each NUMA node
+    dpdk_socket_mem=""
+    for _numa_node in /sys/devices/system/node/node*/hugepages
+    do
+        if [ -z "${dpdk_socket_mem}" ]; then
+            dpdk_socket_mem="${DPDK_MEM_PER_SOCKET}"
+        else
+            dpdk_socket_mem="${dpdk_socket_mem},${DPDK_MEM_PER_SOCKET}"
+        fi
+    done
+    if [ -n "${dpdk_socket_mem}" ]; then
+        echo "${0##*/}: updating per socket memory allocation in ${VROUTER_DPDK_INI}..."
+        dpdk_socket_mem=" --socket-mem ${dpdk_socket_mem}"
+    fi
+    ## update the ini file
+    sed -ri.bak \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--socket-mem +\"[^"]+\"|--socket-mem +[^ ]+)(.*) *$/\1\3/' \
+        -e 's/(^ *command *=.*vrouter-dpdk.*) (--socket-mem +\"[^"]+\"|--socket-mem +[^ ]+)(.*) *$/\1\3/' \
+        -e "s/(^ *command *=.*vrouter-dpdk.*)/\\1${dpdk_socket_mem}/" \
+         ${VROUTER_DPDK_INI}
 }
 
 ##
@@ -336,13 +402,25 @@ _dpdk_vrouter_ini_update() {
 vrouter_dpdk_if_bind() {
     echo "$(date): Binding interfaces to DPDK drivers..."
 
-    _dpdk_conf_read
+    # TODO: This is a temporary workaround for the race between vRouter
+    # start and network interfaces set up. There were observed cases when the
+    # vRouter had started before the bond0 interface was created, which led to
+    # an error as DPDK could not bind to the non-existing interface. In
+    # overall, cleanup of the functions in this file should be done to
+    # eliminate such workarounds.
+    DPDK_PHY=$(cat $CONFIG | sed -nr 's/^\s*physical_interface\s*=\s*(\S+)\b/\1/p')
+    loops=0
+    while [ ! -e /sys/class/net/${DPDK_PHY} ]; do
+        sleep 2
+        loops=$(($loops + 1))
+        if [ $loops -ge 60 ]; then
+            echo "$(date): Error binding physical interface ${DPDK_PHY}: device not found"
+            ${DPDK_BIND} --status
+            return 1
+        fi
+    done
 
-    if [ ! -f /sys/class/net/${DPDK_PHY}/address ]; then
-        echo "$(date): Error binding physical interface ${DPDK_PHY}: device found"
-        ${DPDK_BIND} --status
-        return 1
-    fi
+    _dpdk_conf_read
 
     modprobe igb_uio
     # multiple kthreads for port monitoring
@@ -350,11 +428,25 @@ vrouter_dpdk_if_bind() {
 
     _dpdk_system_bond_info_collect
     _dpdk_vrouter_ini_update
+
+    mkdir -p ${DPDK_BINDING_DRIVER_DATA}
+    for slave_pci in ${DPDK_BOND_PCIS}; do
+        if [ ! -e ${DPDK_BINDING_DRIVER_DATA}/${slave_pci} ]; then
+            echo "Adding lspci data to ${DPDK_BINDING_DRIVER_DATA}/${slave_pci}"
+            `lspci -vmmks ${slave_pci} > ${DPDK_BINDING_DRIVER_DATA}/${slave_pci}`
+        fi
+    done
+
     # bind physical device(s) to DPDK driver
     for slave in ${DPDK_BOND_SLAVES}; do
         echo "Binding device ${slave} to DPDK igb_uio driver..."
         ${DPDK_BIND} --force --bind=igb_uio ${slave}
     done
+
+    if [ -n "${DPDK_BOND_MODE}" ]; then
+        echo "${0##*/}: removing bond interface from Linux..."
+        ifdown "${DPDK_PHY}"
+    fi
 
     ${DPDK_BIND} --status
 
@@ -396,9 +488,7 @@ _dpdk_vrouter_ini_bond_info_collect() {
         if [ -n "${slave_pci_name}" ]; then
             DPDK_BOND_PCI_NAMES="${DPDK_BOND_PCI_NAMES} ${slave_pci_name}"
         fi
-        slave_driver=`lspci -vmmks ${slave_pci} | grep 'Module:' | cut -f 2`
         eval DPDK_BOND_${slave_pci_name}_PCI="${slave_pci}"
-        eval DPDK_BOND_${slave_pci_name}_DRIVER="${slave_driver}"
     done
     DPDK_BOND_PCI_NAMES="${DPDK_BOND_PCI_NAMES# }"
 }
@@ -425,18 +515,48 @@ vrouter_dpdk_if_unbind() {
 
     _dpdk_vrouter_ini_bond_info_collect
 
+    ## make sure igb_uio is loaded otherwise DPDK_BIND will not work
+    modprobe igb_uio
     for slave_pci_name in ${DPDK_BOND_PCI_NAMES}; do
         eval slave_pci=\${DPDK_BOND_${slave_pci_name}_PCI}
-        eval slave_driver=\${DPDK_BOND_${slave_pci_name}_DRIVER}
-
+        slave_driver=`grep "Driver:" ${DPDK_BINDING_DRIVER_DATA}/${slave_pci} | cut -f 2 | tr -d ['\n\r']`
         echo "Binding PCI device ${slave_pci} back to ${slave_driver} driver..."
         ${DPDK_BIND} --force --bind=${slave_driver} ${slave_pci}
+        rm ${DPDK_BINDING_DRIVER_DATA}/${slave_pci}
     done
 
     ${DPDK_BIND} --status
 
     rmmod rte_kni
     rmmod igb_uio
+
+    echo "$(date): Re-initialize networking."
+    for iface in $(ifquery --list);
+    do
+        if ifquery $iface | grep -i "bond";
+        then
+            ifdown $iface
+         fi
+    done
+
+    # Make the bond slaves up
+    # Bond slaves with automatically make the bond master up
+    for iface in $(ifquery --list);
+    do
+        if ifquery $iface | grep -i "bond-master:";
+        then
+            ifup $iface
+         fi
+    done
+
+    # Make other interfaces up (which are still down)
+    for iface in $(ifquery --list);
+    do
+        if ! ifquery --state $iface;
+        then
+            ifup $iface
+         fi
+    done
 
     echo "$(date): Done unbinding interfaces."
 }
