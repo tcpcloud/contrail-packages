@@ -6,6 +6,7 @@
 ifdef VERSION
 
 CONTRAIL_VERSION = $(VERSION)
+VROUTER_VERSION = $(VERSION)
 NEUTRON_VERSION = $(VERSION)
 CEILOMETER_VERSION = $(VERSION)
 CONTRAIL_HEAT_VERSION = $(VERSION)
@@ -19,12 +20,14 @@ else
 #
 
 CONTROLLER_REF := $(shell (cd controller; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
+VROUTER_REF := $(shell (cd vrouter; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 WEBUI_CORE_REF := $(shell (cd contrail-web-core; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 WEBUI_CONTROLLER_REF := $(shell (cd contrail-web-controller; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 NEUTRON_REF := $(shell (cd openstack/neutron_plugin; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 CEILOMETER_REF := $(shell (cd openstack/ceilometer_plugin; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 CONTRAIL_HEAT_REF := $(shell (cd openstack/contrail-heat; git log --oneline -1) | awk '/[0-9a-f]+/ { print $$1; }')
 CONTRAIL_VERSION = 1.1master~$(CONTROLLER_REF)
+VROUTER_VERSION = 1.1master~$(VROUTER_REF)
 WEBUI_CORE_VERSION = 1.1master~$(CONTROLLER_REF)
 WEBUI_CONTROLLER_VERSION = 1.1master~$(CONTROLLER_REF)
 NEUTRON_VERSION = 1.1master~$(NEUTRON_REF)
