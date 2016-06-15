@@ -2,6 +2,8 @@ Source: contrail-vrouter-dpdk
 Maintainer: OpenContrail Developers
 Section: net
 Priority: optional
+Build-Depends: debhelper (>= 8.0.0),
+               scons (>= 2.1.0),
 
 Package: contrail-vrouter-dpdk
 Architecture: all

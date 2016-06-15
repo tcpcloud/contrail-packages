@@ -9,11 +9,10 @@ export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(INSTALL_ROOT)/usr/lib
 	dh $@
 
 override_dh_auto_clean:
-	(cd ${SB_TOP}; scons -c --opt=production vrouter/dpdk)
 
 override_dh_auto_build:
 	(cd ${SB_TOP}; scons --opt=production vrouter/dpdk)
 
 override_dh_auto_install:
 	mkdir -p ${INSTALL_ROOT}/usr/bin
-	cp ${SB_TOP}/build/production/vrouter/dpdk/contrail-vrouter-dpdk ${INSTALL_ROOT}/usr/bin/
+	install -m0755 ${SB_TOP}/build/production/vrouter/dpdk/contrail-vrouter-dpdk ${INSTALL_ROOT}/usr/bin/
