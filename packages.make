@@ -22,7 +22,11 @@ KEYOPT=-k$(KEYID)
 #
 SOURCE_CONTRAIL_DIRS:=$(shell xmllint --xpath '//manifest/project/@path' .repo/manifest.xml | sed -r 's/path=\"([^\"]+)\"/\1/g' | sed 's/tools\/packages//')
 SOURCE_CONTRAIL_ARCHIVE:=SConstruct $(SOURCE_CONTRAIL_DIRS)
-SERIES=$(shell lsb_release -c -s)
+ifdef DIST
+	SERIES=${DIST}
+else
+	SERIES=$(shell lsb_release -c -s)
+endif
 
 source-all: source-package-contrail-web-core \
 	source-package-contrail-web-controller \
