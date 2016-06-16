@@ -35,6 +35,7 @@ Build-Depends: autoconf,
                librdkafka-dev,
                librdkafka1,
                linux-headers,
+               libboost-dev,
                BUILDDEP_SERIES
 
 Package: contrail-analytics
