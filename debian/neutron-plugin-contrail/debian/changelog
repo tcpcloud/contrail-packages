@@ -1,4 +1,4 @@
-neutron-plugin-contrail (VERSION) SERIES; urgency=low
+neutron-plugin-contrail (VERSION-0) SERIES; urgency=low
 
   * Initial release.
 

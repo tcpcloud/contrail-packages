@@ -1,4 +1,4 @@
-contrail-vrouter-dpdk (VERSION) SERIES; urgency=low
+contrail-vrouter-dpdk (VERSION-0) SERIES; urgency=low
 
   * OpenContrail DPDK vRouter initial release.
 
