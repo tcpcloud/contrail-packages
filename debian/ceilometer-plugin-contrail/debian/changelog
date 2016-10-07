@@ -1,4 +1,4 @@
-ceilometer-plugin-contrail (VERSION) SERIES; urgency=low
+ceilometer-plugin-contrail (VERSION-0) SERIES; urgency=low
 
   * Initial release.
 
