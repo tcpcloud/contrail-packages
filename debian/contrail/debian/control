@@ -39,6 +39,8 @@ Build-Depends: autoconf,
                cassandra-cpp-driver,
                cassandra-cpp-driver-dev,
                libzookeeper-mt-dev,
+               liburcu-dev,
+               libopenmpi-dev,
                BUILDDEP_SERIES
 
 Package: contrail-analytics
