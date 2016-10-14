@@ -16,4 +16,4 @@
 	       libhttp-parser-dev,
 	       libxml2-dev,
 	       libicu-dev,
-               linux-headers-3.16.0-4-common,
+               linux-headers-3.16.0-4-all,
