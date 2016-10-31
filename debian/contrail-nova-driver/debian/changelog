@@ -1,3 +1,9 @@
+contrail-nova-driver (1.1.0-1+SERIES1) SERIES; urgency=medium
+
+  * Fix series to support multi-distribution build
+
+ -- Filip Pytloun <filip@pytloun.cz>  Mon, 31 Oct 2016 13:53:40 +0100
+
 contrail-nova-driver (1.1.0-1) unstable; urgency=low
 
   * Initial release.
