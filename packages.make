@@ -20,8 +20,8 @@ KEYOPT=-k$(KEYID)
 #
 # Directories listed in manifest (excluding package scripts)
 #
-SOURCE_CONTRAIL_DIRS:=$(shell xmllint --xpath '//manifest/project/@path' .repo/manifest.xml | sed -r 's/path=\"([^\"]+)\"/\1/g' | sed 's/tools\/packages//')
-SOURCE_CONTRAIL_ARCHIVE:=SConstruct $(SOURCE_CONTRAIL_DIRS)
+SOURCE_CONTRAIL_ARCHIVE:=SConstruct tools/build tools/packages/utils controller vrouter third_party tools/generateds tools/sandesh openstack/nova_contrail_vif openstack/neutron_plugin openstack/nova_extensions openstack/contrail-heat contrail-webui-third-party
+
 ifdef DIST
 	SERIES=${DIST}
 else
