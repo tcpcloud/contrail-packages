@@ -1,3 +1,9 @@
+ifmap-python-client (0.1-2+SERIES1) SERIES; urgency=medium
+
+  * Fix series to support multi-distribution build
+
+ -- Filip Pytloun <filip@pytloun.cz>  Mon, 31 Oct 2016 13:54:10 +0100
+
 ifmap-python-client (0.1-2) unstable; urgency=medium
 
   *  Handle update to geventhttpclient library that enabled

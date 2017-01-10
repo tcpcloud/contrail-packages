@@ -1,3 +1,4 @@
+               libssl-dev,
 	       libboost-dev,
 	       libboost-chrono-dev,
 	       libboost-date-time-dev,
@@ -15,4 +16,4 @@
 	       libhttp-parser-dev,
 	       libxml2-dev,
 	       libicu-dev,
-               linux-headers-generic,
+               linux-headers-3.16.0-4-all,

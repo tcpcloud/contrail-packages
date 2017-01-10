@@ -5,14 +5,18 @@ export INSTALL_ROOT=$(shell pwd)
 SB_TOP := $(shell pwd | sed -re "s/(.*)\/build\/packages(.*)/\1/")
 export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(INSTALL_ROOT)/usr/lib
 
+VER := $(shell lsb_release -c)
+KVERS := $(shell basename `ls -d /lib/modules/*|tail -1`)
+KERNELDIR := /lib/modules/$(KVERS)/build
+
+USER ?= root
+
+
 %:
 	dh $@
 
-override_dh_auto_clean:
-	(cd ${SB_TOP}; scons -c --opt=production vrouter/dpdk)
-
 override_dh_auto_build:
-	(cd ${SB_TOP}; scons --opt=production vrouter/dpdk)
+	(cd ${SB_TOP}; KERNELDIR=$(KERNELDIR) RTE_KERNELDIR=$(KERNELDIR) USER=$(USER) scons --opt=production --optimization=production --root=${INSTALL_ROOT} --kernel-dir=$(KERNELDIR) vrouter/dpdk)
 
 override_dh_auto_install:
 	mkdir -p ${INSTALL_ROOT}/usr/bin
