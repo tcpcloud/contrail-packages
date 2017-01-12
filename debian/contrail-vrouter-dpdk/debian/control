@@ -4,6 +4,12 @@ Section: net
 Priority: optional
 Build-Depends: liburcu-dev,
                lsb-release,
+               debhelper (>= 8.0.0),
+               scons (>= 2.1.0),
+               autoconf,
+               automake,
+               libtool,
+               pkg-config,
                flex,
                bison,
                libxml2-dev,
@@ -11,7 +17,8 @@ Build-Depends: liburcu-dev,
                libboost-dev,
                libpcap0.8-dev,
                libnl-3-dev,
-               libnl-genl-3-dev
+               libnl-genl-3-dev,
+               BUILDDEP_SERIES
 
 Package: contrail-vrouter-dpdk
 Architecture: all
