@@ -3,6 +3,7 @@ Maintainer: OpenContrail Developers
 Section: net
 Priority: optional
 Build-Depends: liburcu-dev,
+               lsb-release,
                flex,
                bison,
                libxml2-dev,
